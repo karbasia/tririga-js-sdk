@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "moduleResolution": "node",
+    "target": "es2017",
+    "module": "esnext",
+    "strict": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "build",
+    "lib": ["ES2017", "DOM"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["./src", "./tests"]
+}
