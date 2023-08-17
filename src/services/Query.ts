@@ -24,7 +24,7 @@ export interface QueryListResults {
 }
 
 interface QueryColumnDefinitions {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface QueryMetadata {
@@ -42,22 +42,36 @@ export interface QueryData {
   totalSize: number;
 }
 
+/** Platform 4.2+.The Query class is used to retrieve and execute TRIRIGA queries. */
 export default class Query {
   appConfig: AppConfig;
   auth: Auth;
 
+  /** @hidden */
   constructor(appConfig: AppConfig, auth: Auth) {
     this.appConfig = appConfig;
     this.auth = auth;
   }
 
+  /**
+   * Retrieves the system report list
+   *
+   * @remarks
+   * An async function that returns the results of system reports. The authenticated user must have access to system reports to view this data.
+   *
+   * @param pageNumber The current page number
+   * @param perPage The total number of reports per page
+   * @returns A `QueryListResults` object with the query details
+   *
+   * @throws Error if the query list could not be retrieved. This is caused by connectivity, session or user permission issues.
+   */
   async getQueryList(
     pageNumber: number,
     perPage: number
   ): Promise<QueryListResults> {
     // Ensure that the CSRF Token is still valid
     if (await this.auth.updateCsrfToken()) {
-      let queryParams = {
+      const queryParams = {
         objectId: "1200000",
         actionId: "1200501",
         managerReportType: "SystemReport",
@@ -65,7 +79,7 @@ export default class Query {
         noOfReports: perPage.toString(),
       };
 
-      let headers: HeadersInit = {};
+      const headers: HeadersInit = {};
       headers[this.auth.csrfToken.name] = this.auth.csrfToken.value;
 
       const urlParams = new URLSearchParams(queryParams);
@@ -83,7 +97,7 @@ export default class Query {
       if (req.ok) {
         const resp = await req.json();
         if (resp.length > 1) {
-          let results: QueryListResults = {
+          const results: QueryListResults = {
             totalPageCount: resp[1].TotalNumberOfPages,
             resultsPerPage: resp[1].ResultsPerPage,
             hasNextPage: resp[1].IsNext,
@@ -100,8 +114,19 @@ export default class Query {
     throw new Error("Could not retrieve query list");
   }
 
+  /**
+   * Retrieves the query metadata
+   *
+   * @remarks
+   * The query metadata will contain details surrounding the columns.
+   *
+   * @param templateId The unique query ID
+   * @returns A `QueryMetadata` object
+   *
+   * @throws Error if the query is not found or if the client encounters connectivity issues.
+   */
   async getQueryDefinition(templateId: number): Promise<QueryMetadata> {
-    let queryMetadata: QueryMetadata = { columnDefinitions: [] };
+    const queryMetadata: QueryMetadata = { columnDefinitions: [] };
     const reqOptions = this.auth.generateRequestHeaders();
     const urlParams = new URLSearchParams({
       reportTemplId: templateId.toString(),
@@ -118,13 +143,6 @@ export default class Query {
       }
       if (resp["gridConfig"] && resp["gridConfig"]["columns"].length > 0) {
         queryMetadata.columnDefinitions = resp["gridConfig"]["columns"];
-
-        // queryMetadata.columnDefinitions = resp['gridConfig']['columns'].reduce((arr: any, col: any) => {
-        //   return {
-        //     ...arr,
-        //     [col['id']]: col
-        //   }
-        // }, {});
       }
       return queryMetadata;
     }
@@ -132,6 +150,19 @@ export default class Query {
     throw new Error("Could not determine query metadata");
   }
 
+  /**
+   * Returns the query data for a specific page.
+   *
+   * @remarks
+   * This method is used to retrieve data from a specific query. It will return an object that contains the data with the defined columns.
+   *
+   * @param templateId The unique query ID
+   * @param pageNumber The current page number
+   * @param pageSize The page size
+   * @returns A `QueryData` object containing record details for the current page.
+   *
+   * @throws Error if the input is invalid or if the client encounters connectivity issues.
+   */
   async getQueryData(
     templateId: number,
     pageNumber = 0,
@@ -171,14 +202,4 @@ export default class Query {
 
     throw Error("Invalid query metadata");
   }
-
-  // private _generateDataObject(columnDef: QueryColumnDefinitions, rawData: QueryData): QueryData {
-  //   let data: QueryData = {};
-
-  //   for (let key in rawData) {
-  //     data[columnDef[key]] = rawData[key];
-  //   }
-
-  //   return data;
-  // }
 }

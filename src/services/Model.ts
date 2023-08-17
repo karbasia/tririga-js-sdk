@@ -9,6 +9,10 @@ import {
 import Auth from "@/services/Auth";
 import BaseModel from "./utils/base/BaseModel";
 
+/**
+ * Platform 3.8+
+ * The main class for interacting with UX data sources
+ */
 export default class Model extends BaseModel {
   constructor(appConfig: AppConfig, auth: Auth) {
     super(appConfig, auth);

@@ -2,7 +2,7 @@ import ModelResultList from "@/services/utils/ModelResultList";
 
 export interface BaseRecord {
   _id: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface UpdateRecordResponse<T> {
