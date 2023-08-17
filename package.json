@@ -4,6 +4,10 @@
   "description": "Lightweight TRIRIGA Javascript Client SDK",
   "author": "Amir Karbasi",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/karbasia/tririga-js-sdk.git"
+  },
   "main": "./dist/tririga-js-sdk.es.mjs",
   "types": "./dist/tririga-js-sdk.es.d.mts",
   "scripts": {
