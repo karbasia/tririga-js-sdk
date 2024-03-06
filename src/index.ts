@@ -28,6 +28,13 @@ import {
   MonthlyRecurrence,
   YearlyRecurrence,
 } from "@/services/utils/helpers/Recurrence";
+import Report, {
+  ReportListResults,
+  ReportData,
+  ReportListFilters,
+  ReportDetails,
+} from "@/services/Report";
+
 import Client from "@/Client";
 
 export {
@@ -57,6 +64,11 @@ export {
   User,
   UpdateRecordResponse,
   CreateRecordResponse,
+  ReportListResults,
+  ReportData,
+  ReportDetails,
+  ReportListFilters,
+  Report,
 };
 
 export default Client;

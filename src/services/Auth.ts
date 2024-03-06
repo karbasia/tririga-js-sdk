@@ -195,12 +195,28 @@ export default class Auth {
   }
 
   /**
+   * Simple method for generating a redirect URL for the frontend.
+   *
+   * @remarks
+   * Used with frontend frameworks to redirect the user to the login URL. Once authenticated, they will return to their previous page.
+   * This flow is also supported by SSO-enabled environments.
+   *
+   * @param url The page that the user should be redirected to after a successful authentication.
+   * @returns The full URL that the user should be redirected for reauthentication.
+   */
+  generateLoginUrl(url: string) {
+    return `${
+      this.appConfig.tririgaUrl
+    }/p/websignon?redirectUrl=${encodeURIComponent(url)}`;
+  }
+
+  /**
    * A helper method for building the basic request options object.
    *
    * @remarks
    * This method is used to append the required cookie and useCredentials values to the request options.
    *
-   * @param additionalOptions Custom request options from the caller
+   * @param additionalOptions Custom request options from the caller.
    * @returns A `RequestInit` object with the required headers and user specified options.
    */
   generateRequestHeaders(additionalOptions?: RequestInit): RequestInit {
