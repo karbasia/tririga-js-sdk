@@ -1,5 +1,6 @@
 import Auth from "@/services/Auth";
 import Model from "@/services/Model";
+import Report from "@/services/Report";
 import AppConfig, { WebAppProperties } from "@/services/utils/AppConfig";
 
 /**
@@ -10,6 +11,7 @@ export default class Client {
 
   auth!: Auth;
   model!: Model;
+  report!: Report;
 
   /** @hidden */
   constructor(appConfig: AppConfig) {
@@ -37,6 +39,7 @@ export default class Client {
 
     client.auth = new Auth(appConfig, useCredentials);
     client.model = new Model(appConfig, client.auth);
+    client.report = new Report(appConfig, client.auth);
 
     if (useCredentials) {
       await client.model.Init();
