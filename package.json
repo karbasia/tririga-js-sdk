@@ -1,6 +1,6 @@
 {
   "name": "tririga-js-sdk",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Lightweight TRIRIGA Javascript Client SDK",
   "author": "Amir Karbasi",
   "license": "MIT",

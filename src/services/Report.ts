@@ -24,7 +24,7 @@ export interface ReportListResults {
 }
 
 interface ReportColumnDefinitions {
-  [key: string]: unknown;
+  [key: string]: string;
 }
 
 export interface ReportMetadata {
