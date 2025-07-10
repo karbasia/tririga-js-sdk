@@ -7,6 +7,23 @@ export interface User {
   userId: number;
 }
 
+interface ActionPermissions {
+  actionGroup: string;
+  actionName: string;
+  dataSourcesPath: string;
+  permission: boolean;
+}
+
+export interface Permissions {
+  canCreate: boolean;
+  canRead: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+  hasLicense: boolean;
+  modelName: string;
+  actions: ActionPermissions[];
+}
+
 interface csrfToken {
   name: string;
   value: string;
@@ -17,11 +34,13 @@ export default class Auth {
   appConfig: AppConfig;
   useCredentials: boolean;
 
-  currentUser!: User;
+  currentUser?: User;
 
-  csrfToken!: csrfToken;
+  csrfToken?: csrfToken;
 
-  sessionCookie!: string;
+  sessionCookie?: string;
+
+  permissions?: Permissions;
 
   constructor(appConfig: AppConfig, useCredentials: boolean) {
     this.appConfig = appConfig;
@@ -44,25 +63,27 @@ export default class Auth {
       return true;
     }
 
-    const reqHeaders = new Headers();
-    reqHeaders.append("Content-Type", "application/json");
+    const reqHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+    };
 
     const reqOptions = this.generateRequestHeaders({
       headers: reqHeaders,
       method: "POST",
       body: JSON.stringify({ userName, password }),
     });
+
     const req = await fetch(
       `${this.appConfig.tririgaUrl}/p/websignon/tririga-login`,
       reqOptions
     );
 
     if (req.ok) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cookies: Array<string> = (req.headers as any).getSetCookie();
       if (cookies && cookies.length > 0) {
-        this.sessionCookie = cookies[1];
+        this.sessionCookie = cookies[0];
       }
+
       await this.getCurrentUser();
       return this.updateCsrfToken();
     }
@@ -81,7 +102,7 @@ export default class Auth {
   async InitHeaders(): Promise<HeadersInit> {
     const headers: HeadersInit = {};
 
-    if (await this.updateCsrfToken()) {
+    if ((await this.updateCsrfToken()) && this.csrfToken) {
       headers[this.csrfToken.name] = this.csrfToken.value;
     }
 
@@ -220,17 +241,74 @@ export default class Auth {
    * @returns A `RequestInit` object with the required headers and user specified options.
    */
   generateRequestHeaders(additionalOptions?: RequestInit): RequestInit {
-    const reqOptions: RequestInit = additionalOptions ? additionalOptions : {};
+    const reqOptions: RequestInit = additionalOptions ?? {};
 
     if (this.useCredentials) {
       reqOptions.credentials = "include";
     } else {
       reqOptions.headers = {
         ...reqOptions.headers,
-        Cookie: this.sessionCookie,
+        Cookie: this.sessionCookie ?? "",
       };
     }
 
     return reqOptions;
+  }
+
+  /**
+   * This method is used to retrieve the permissions for the current user.
+   *
+   * @returns Permission object containing the user's permissions against the application.
+   */
+  async getPermissions(): Promise<Permissions> {
+    if (this.permissions) {
+      return this.permissions;
+    }
+
+    const reqOptions: RequestInit = this.generateRequestHeaders({
+      method: "GET",
+    });
+
+    const resp = await fetch(
+      `${this.appConfig.tririgaUrl}/p/auth?appName=${this.appConfig.appExposedName}`,
+      reqOptions
+    );
+
+    if (resp.ok) {
+      this.permissions = (await resp.json()) as Permissions;
+      return this.permissions;
+    }
+
+    throw new Error(
+      `Failed to retrieve permissions. Status code: ${resp.status}`
+    );
+  }
+
+  /**
+   * A simple method to check if the user has permission to perform a specific action.
+   * All inputs are case-sensitive.
+   *
+   * @param actionGroup Action group name
+   * @param actionName Action name
+   * @param dataSourcesPath Data source path (e.g. "reservations" or "buildings/floors/spaces")
+   * @returns A boolean indicating whether the user has permission to perform the action.
+   */
+  hasActionPermission(
+    actionGroup: string,
+    actionName: string,
+    dataSourcesPath: string
+  ): boolean {
+    if (!this.permissions) {
+      console.error("Permissions not loaded. Call getPermissions() first.");
+      return false;
+    }
+
+    return this.permissions.actions.some(
+      action =>
+        action.actionGroup === actionGroup &&
+        action.actionName === actionName &&
+        action.dataSourcesPath === dataSourcesPath &&
+        action.permission
+    );
   }
 }
