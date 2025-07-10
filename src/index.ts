@@ -1,5 +1,5 @@
 import Model from "@/services/Model";
-import Auth, { User } from "@/services/Auth";
+import Auth, { User, Permissions } from "@/services/Auth";
 import AppConfig from "@/services/utils/AppConfig";
 import { WebAppProperties } from "@/services/utils/AppConfig";
 import ModelResultList from "@/services/utils/ModelResultList";
@@ -69,6 +69,7 @@ export {
   ReportDetails,
   ReportListFilters,
   Report,
+  Permissions,
 };
 
 export default Client;
