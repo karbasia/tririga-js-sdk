@@ -1,6 +1,0 @@
-tests/
-coverage/
-dist/
-node_modules/
-**/*.json
-docs/

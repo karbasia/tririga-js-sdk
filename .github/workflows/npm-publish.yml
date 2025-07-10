@@ -1,0 +1,195 @@
+name: NPM Publish
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+    types: [closed]
+
+jobs:
+  check-version:
+    if: github.event_name == 'push' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.check.outputs.changed }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: check
+        run: |
+          # Get current version
+          CURRENT_VERSION=$(jq -r '.version' package.json)
+
+          # Get previous version based on event type
+          if [ "${{ github.event_name }}" == "push" ]; then
+            # For direct pushes, compare with previous commit
+            if git show HEAD~1:package.json > /dev/null 2>&1; then
+              PREV_VERSION=$(git show HEAD~1:package.json | jq -r '.version')
+            else
+              echo "No previous commit found, treating as first version"
+              PREV_VERSION="0.0.0"
+            fi
+          else
+            # For merged PRs, compare with base branch
+            git fetch origin ${{ github.event.pull_request.base.ref }}
+            if git show origin/${{ github.event.pull_request.base.ref }}:package.json > /dev/null 2>&1; then
+              PREV_VERSION=$(git show origin/${{ github.event.pull_request.base.ref }}:package.json | jq -r '.version')
+            else
+              echo "No base branch version found, treating as first version"
+              PREV_VERSION="0.0.0"
+            fi
+          fi
+
+          echo "Previous version: $PREV_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+
+          if [ "$PREV_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "✅ Version changed from $PREV_VERSION to $CURRENT_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Version unchanged ($CURRENT_VERSION)"
+          fi
+
+  build-and-publish:
+    needs: check-version
+    if: needs.check-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting and type checking
+        run: |
+          echo "🔍 Running type check..."
+          npm run type-check
+          echo "✅ Type check passed"
+
+      - name: Check code formatting
+        run: |
+          echo "🎨 Checking code formatting..."
+          npm run format:check
+          echo "✅ Code formatting check passed"
+
+      - name: Run tests
+        run: |
+          echo "🧪 Running tests..."
+          npm test
+          echo "✅ All tests passed"
+
+      - name: Build package
+        run: |
+          echo "🏗️ Building package..."
+          npm run build
+          echo "✅ Package built successfully"
+
+      - name: Verify build output
+        run: |
+          echo "📦 Verifying build output..."
+          if [ ! -d "dist" ]; then
+            echo "❌ Build output directory 'dist' not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.js" ]; then
+            echo "❌ Main build file 'dist/index.js' not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.d.ts" ]; then
+            echo "❌ Type definitions 'dist/index.d.ts' not found"
+            exit 1
+          fi
+          echo "✅ Build output verified"
+
+      - name: Check if version already exists on NPM
+        run: |
+          echo "🔍 Checking if version ${{ needs.check-version.outputs.version }} already exists on NPM..."
+          if npm view tririga-js-sdk@${{ needs.check-version.outputs.version }} version 2>/dev/null; then
+            echo "❌ Version ${{ needs.check-version.outputs.version }} already exists on NPM"
+            exit 1
+          else
+            echo "✅ Version ${{ needs.check-version.outputs.version }} is available for publishing"
+          fi
+
+      - name: Publish to NPM
+        run: |
+          echo "🚀 Publishing to NPM..."
+          npm publish
+          echo "✅ Successfully published to NPM"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.check-version.outputs.version }}
+          release_name: Release v${{ needs.check-version.outputs.version }}
+          body: |
+            ## 🎉 New Release: v${{ needs.check-version.outputs.version }}
+
+            This release has been automatically published to NPM.
+
+            ### 📦 Installation
+            ```bash
+            npm install tririga-js-sdk@${{ needs.check-version.outputs.version }}
+            ```
+
+            ### 🔗 NPM Package
+            https://www.npmjs.com/package/tririga-js-sdk/v/${{ needs.check-version.outputs.version }}
+
+            ### 📚 Documentation
+            https://karbasia.github.io/tririga-js-sdk/
+
+            ---
+            *This release was automatically created by GitHub Actions*
+          draft: false
+          prerelease: false
+
+  notify:
+    needs: [check-version, build-and-publish]
+    if: always() && needs.check-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify success
+        if: needs.build-and-publish.result == 'success'
+        run: |
+          echo "🎉 Successfully published version ${{ needs.check-version.outputs.version }} to NPM!"
+          echo "📦 Package: https://www.npmjs.com/package/tririga-js-sdk/v/${{ needs.check-version.outputs.version }}"
+          echo "📚 Documentation: https://karbasia.github.io/tririga-js-sdk/"
+
+      - name: Notify failure
+        if: needs.build-and-publish.result == 'failure'
+        run: |
+          echo "❌ Failed to publish version ${{ needs.check-version.outputs.version }} to NPM"
+          echo "Please check the logs above for more details."
+          exit 1
+
+      - name: Notify skipped
+        if: needs.check-version.outputs.version-changed == 'false'
+        run: |
+          echo "ℹ️ No version change detected, skipping NPM publish"

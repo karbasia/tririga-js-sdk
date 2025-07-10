@@ -84,7 +84,7 @@ export default class Report {
     filters?: ReportListFilters
   ): Promise<ReportListResults> {
     // Ensure that the CSRF Token is still valid
-    if (await this.auth.updateCsrfToken()) {
+    if ((await this.auth.updateCsrfToken()) && this.auth.csrfToken) {
       const queryParams = {
         objectId: "1200000",
         actionId: "1200501",
