@@ -65,6 +65,8 @@ jobs:
     needs: check-version
     if: needs.check-version.outputs.version-changed == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -146,32 +148,28 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ needs.check-version.outputs.version }}
-          release_name: Release v${{ needs.check-version.outputs.version }}
-          body: |
-            ## 🎉 New Release: v${{ needs.check-version.outputs.version }}
+        run: |
+          gh release create "v${{ needs.check-version.outputs.version }}" \
+            --title "Release v${{ needs.check-version.outputs.version }}" \
+            --notes "## 🎉 New Release: v${{ needs.check-version.outputs.version }}
 
-            This release has been automatically published to NPM.
+          This release has been automatically published to NPM.
 
-            ### 📦 Installation
-            ```bash
-            npm install tririga-js-sdk@${{ needs.check-version.outputs.version }}
-            ```
+          ### 📦 Installation
+          \`\`\`bash
+          npm install tririga-js-sdk@${{ needs.check-version.outputs.version }}
+          \`\`\`
 
-            ### 🔗 NPM Package
-            https://www.npmjs.com/package/tririga-js-sdk/v/${{ needs.check-version.outputs.version }}
+          ### 🔗 NPM Package
+          https://www.npmjs.com/package/tririga-js-sdk/v/${{ needs.check-version.outputs.version }}
 
-            ### 📚 Documentation
-            https://karbasia.github.io/tririga-js-sdk/
+          ### 📚 Documentation
+          https://karbasia.github.io/tririga-js-sdk/
 
-            ---
-            *This release was automatically created by GitHub Actions*
-          draft: false
-          prerelease: false
+          ---
+          *This release was automatically created by GitHub Actions*"
 
   notify:
     needs: [check-version, build-and-publish]
