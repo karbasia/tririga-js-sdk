@@ -200,9 +200,10 @@ export default class BaseModel {
   }
 
   protected _generateRequestOptions(): RequestInit {
-    const requestHeaders: HeadersInit = new Headers();
-    requestHeaders.set(this.WEB_CONTEXT_HEADER_NAME, this.webContextId || "");
-    requestHeaders.set("Content-Type", "application/json");
+    const requestHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    requestHeaders[this.WEB_CONTEXT_HEADER_NAME] = this.webContextId || "";
 
     const requestOptions: RequestInit = this.auth.generateRequestHeaders({
       cache: "no-cache",
