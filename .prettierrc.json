@@ -4,5 +4,25 @@
   "tabWidth": 2,
   "semi": true,
   "singleQuote": false,
-  "arrowParens": "avoid"
+  "arrowParens": "avoid",
+  "printWidth": 80,
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "endOfLine": "lf",
+  "quoteProps": "as-needed",
+  "proseWrap": "preserve",
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "proseWrap": "always"
+      }
+    },
+    {
+      "files": "*.json",
+      "options": {
+        "printWidth": 120
+      }
+    }
+  ]
 }
