@@ -36,12 +36,15 @@ jobs:
               PREV_VERSION="0.0.0"
             fi
           else
-            # For merged PRs, compare with base branch
-            git fetch origin ${{ github.event.pull_request.base.ref }}
-            if git show origin/${{ github.event.pull_request.base.ref }}:package.json > /dev/null 2>&1; then
-              PREV_VERSION=$(git show origin/${{ github.event.pull_request.base.ref }}:package.json | jq -r '.version')
+            # For merged PRs, compare with the base branch before merge
+            # Use the merge base to get the version before the PR was merged
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            echo "Comparing with base SHA: $BASE_SHA"
+
+            if git show $BASE_SHA:package.json > /dev/null 2>&1; then
+              PREV_VERSION=$(git show $BASE_SHA:package.json | jq -r '.version')
             else
-              echo "No base branch version found, treating as first version"
+              echo "No base SHA version found, treating as first version"
               PREV_VERSION="0.0.0"
             fi
           fi
