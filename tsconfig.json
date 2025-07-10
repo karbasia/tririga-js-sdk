@@ -1,18 +1,22 @@
 {
   "compilerOptions": {
     "declaration": true,
+    "declarationMap": true,
     "moduleResolution": "node",
-    "target": "es2017",
-    "module": "esnext",
+    "target": "ES2019",
+    "module": "ESNext",
     "strict": true,
     "sourceMap": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "build",
-    "lib": ["ES2017", "DOM"],
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2019", "DOM"],
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"]
     }
@@ -21,5 +25,6 @@
     "entryPoints": ["src/index.ts"],
     "out": "docs"
   },
-  "include": ["./src", "./tests"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"]
 }
