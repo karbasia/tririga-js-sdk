@@ -5,14 +5,14 @@ export default class ModelResultList<M = BaseRecord> {
   size!: number;
   hasMoreResults!: boolean;
   from!: number;
-  data!: M[] | M;
+  data!: M;
 
   constructor(
     totalSize?: number,
     size?: number,
     hasMoreResults?: boolean,
     from?: number,
-    data?: M[] | M
+    data?: M
   ) {
     if (data && Array.isArray(data)) {
       this.totalSize = totalSize || 0;
@@ -20,6 +20,6 @@ export default class ModelResultList<M = BaseRecord> {
       this.hasMoreResults = hasMoreResults || false;
       this.from = typeof from !== "undefined" ? from : -1;
     }
-    this.data = data || [];
+    this.data = data || ({} as M);
   }
 }
