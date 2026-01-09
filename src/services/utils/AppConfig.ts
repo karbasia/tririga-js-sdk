@@ -59,9 +59,12 @@ export default class AppConfig {
 
     // Fall back on retrieving the config from the server
     // Use pathname to ignore hash routing, and ensure trailing slash
-    const pathname = window.location.pathname.endsWith("/")
-      ? window.location.pathname
-      : window.location.pathname + "/";
+    let pathname = "";
+    if (typeof window !== "undefined" && window.location) {
+      pathname = window.location.pathname.endsWith("/")
+        ? window.location.pathname
+        : window.location.pathname + "/";
+    }
     const prodAppConfigJson = await fetch(pathname + "tri-app-config.json");
 
     if (prodAppConfigJson.ok) {
