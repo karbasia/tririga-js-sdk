@@ -56,8 +56,8 @@ export interface ReserveContext {
 }
 
 export interface Query {
-  filters?: Filters;
-  sorts?: Sorts;
+  filters?: Filters[];
+  sorts?: Sorts[];
   page?: Page;
   calendar?: Calendar;
   reserveContext?: ReserveContext;
