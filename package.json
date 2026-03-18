@@ -1,6 +1,6 @@
 {
   "name": "tririga-js-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Lightweight TRIRIGA Javascript Client SDK",
   "author": "Amir Karbasi",
