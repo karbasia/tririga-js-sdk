@@ -217,9 +217,7 @@ export default class BaseModel {
     recordIds: string | string[]
   ): object[] | object | null {
     if (Array.isArray(recordIds)) {
-      return recordIds.map(_id => {
-        _id;
-      });
+      return recordIds.map(_id => ({ _id }));
     } else if (recordIds) {
       return { _id: recordIds };
     }
